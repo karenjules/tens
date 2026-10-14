@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>tens</title>
+  <meta name="description" content="Pair numbers that match or add up to ten. Clear the board.">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#F1DFC3" id="theme-color">
+  <meta name="color-scheme" content="light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="tens">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+
+  <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dm-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HOME -->
+  <section class="screen" id="screen-home" aria-label="Home">
+    <div class="home">
+      <div class="topbar">
+        <div class="wordmark">tens<span class="wordmark-dot"></span></div>
+        <button type="button" class="icon-btn" id="home-settings" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        </button>
+      </div>
+
+      <div class="hero-wrap">
+        <div class="label">A NUMBER GAME</div>
+        <div class="hero" aria-label="10">
+          <div class="hero-one" aria-hidden="true">1</div>
+          <div class="hero-ring" aria-hidden="true"><div></div></div>
+          <div class="sticker sticker-dark">same or ten</div>
+        </div>
+        <div class="tagline">Pair numbers that match or add up to ten. Clear the board.</div>
+      </div>
+
+      <button type="button" class="continue" id="home-continue">
+        <div class="continue-top">
+          <span id="continue-label">CONTINUE · STAGE 1</span>
+          <span class="accent" id="continue-left">27 LEFT</span>
+        </div>
+        <div class="continue-row">
+          <div class="mini" id="continue-mini" aria-hidden="true"></div>
+          <div class="continue-score">
+            <div class="continue-num" id="continue-score">0</div>
+            <div class="continue-sub">points so far</div>
+          </div>
+          <div class="play-dot" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2F1B12"><path d="M7 4.5v15l12-7.5z"/></svg>
+          </div>
+        </div>
+      </button>
+
+      <div class="tiles">
+        <div class="tile">
+          <div class="tile-label">BEST SCORE</div>
+          <div class="tile-num" id="home-best">0</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">DAILY STREAK</div>
+          <div class="tile-num" id="home-streak">0 days</div>
+        </div>
+      </div>
+
+      <div class="home-actions">
+        <button type="button" class="btn btn-flame" id="home-new">New game</button>
+        <div class="btn-pair">
+          <button type="button" class="btn btn-outline btn-sm" id="home-daily">Daily challenge</button>
+          <button type="button" class="btn btn-outline btn-sm" id="home-rules">How to play</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen" id="screen-game" aria-label="Game">
+    <div class="game-head">
+      <div class="topbar">
+        <button type="button" class="icon-btn" id="game-back" aria-label="Back to home">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <div class="stage-label" id="game-stage">STAGE 1</div>
+        <button type="button" class="icon-btn icon-q" id="game-help" aria-label="How to play">?</button>
+      </div>
+      <div class="scoreline">
+        <div class="score-block">
+          <div class="label-sm">SCORE</div>
+          <div class="score" id="game-score">0</div>
+        </div>
+        <div class="left-block">
+          <div class="left-text"><span id="game-left">27</span> left</div>
+          <div class="bar"><div id="game-bar"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="board-scroll" id="board-scroll">
+      <div class="board" id="board" role="grid" aria-label="Board"></div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="tools">
+        <button type="button" class="tool" id="game-undo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Undo</button>
+        <button type="button" class="tool" id="game-hint">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/></svg>Hint</button>
+      </div>
+      <button type="button" class="add-btn" id="game-add" aria-label="Add numbers, 5 left">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add
+        <span class="badge" id="game-adds">5</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section class="screen" id="screen-rules" aria-label="How to play">
+    <div class="rules-head">
+      <div class="rules-title">
+        <div class="label">SIX RULES</div>
+        <h1>How to play</h1>
+      </div>
+      <button type="button" class="icon-btn" id="rules-close" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="rules-scroll">
+      <div class="rule">
+        <div class="chips"><span class="chip on">7</span><span class="chip on">7</span></div>
+        <div class="rule-text"><div class="rule-h">Pair the same</div><div class="rule-p">Two matching numbers cancel out.</div></div>
+      </div>
+      <div class="rule">
+        <div class="chips"><span class="chip on">3</span><span class="chip on">7</span></div>
+        <div class="rule-text"><div class="rule-h">Or make ten</div><div class="rule-p">Two numbers that add up to 10 work too.</div></div>
+      </div>
+      <div class="rule rule-col">
+        <div class="chips"><span class="chip on">4</span><span class="chip used">2</span><span class="chip used">8</span><span class="chip on">6</span></div>
+        <div class="rule-text"><div class="rule-h">Neighbours only</div><div class="rule-p">Pairs must sit next to each other across or up and down. Used numbers in between don't block them.</div></div>
+      </div>
+      <div class="rule rule-col">
+        <div class="wrapgrid">
+          <span>5</span><span>1</span><span>6</span><span>2</span><span class="hl">9</span>
+          <span class="hl">1</span><span>3</span><span>6</span><span>4</span><span>8</span>
+        </div>
+        <div class="rule-text"><div class="rule-h">Rows wrap round</div><div class="rule-p">The last number in a row is next to the first number in the row below.</div></div>
+      </div>
+      <div class="rule rule-dark">
+        <div class="plus-dot">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div class="rule-text"><div class="rule-h">Stuck? Add</div><div class="rule-p">Copies every number left onto the end of the board. You get five per stage.</div></div>
+      </div>
+      <div class="rule">
+        <div class="plus-ten">+10</div>
+        <div class="rule-text"><div class="rule-h">Clear rows</div><div class="rule-p">An empty row disappears. Each pair scores 1, each row 10. Clear the board to win.</div></div>
+      </div>
+    </div>
+
+    <div class="rules-foot">
+      <button type="button" class="btn btn-flame" id="rules-play">Let's play</button>
+    </div>
+  </section>
+
+  <!-- BOARD CLEARED -->
+  <section class="screen screen-dark" id="screen-win" aria-label="Board cleared">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="win">
+      <div class="win-title-wrap">
+        <div class="label label-light" id="win-label">STAGE 1 COMPLETE</div>
+        <div class="win-title">Board<br>cleared</div>
+        <div class="sticker sticker-flame" id="win-best-sticker">New best</div>
+      </div>
+
+      <div class="score-card">
+        <div class="score-card-left">
+          <div class="label-sm">SCORE</div>
+          <div class="score-card-num" id="win-score">0</div>
+        </div>
+        <div class="score-card-right" id="win-best">BEST<br>0</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-label">PAIRS</div><div class="stat-num" id="win-pairs">0</div></div>
+        <div class="stat"><div class="stat-label">ADDS USED</div><div class="stat-num" id="win-adds">0 of 5</div></div>
+        <div class="stat"><div class="stat-label">TIME</div><div class="stat-num" id="win-time">0:00</div></div>
+      </div>
+    </div>
+
+    <div class="win-actions">
+      <button type="button" class="btn btn-flame" id="win-next">Next stage
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F1B12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button type="button" class="btn btn-outline-light btn-sm" id="win-home">Home</button>
+    </div>
+  </section>
+
+  <!-- Bottom sheet (board cleared, game over, settings, confirmations) -->
+  <div class="sheet-backdrop" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet-title" id="sheet-title"></div>
+      <div class="sheet-body" id="sheet-body"></div>
+      <div class="sheet-actions" id="sheet-actions"></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" aria-live="polite"><div class="toast" id="toast" hidden></div></div>
+
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
