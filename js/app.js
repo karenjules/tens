@@ -112,7 +112,8 @@
   // ---------- Home ----------
   function renderHome() {
     const run = store.run;
-    const cells = run ? T.decode(run.cells) : T.CLASSIC.map((v) => ({ v, g: false }));
+    // No game yet: preview a sample 38-number board.
+    const cells = run ? T.decode(run.cells) : T.stageBoard(1, T.rng(10), "easy").map((v) => ({ v, g: false }));
     const stage = run ? run.stage : 1;
     $("continue-label").textContent = (!run ? "NEW GAME" : run.over ? "GAME OVER" : "CONTINUE") + " · STAGE " + stage + levelSuffix(run && run.level);
     $("continue-left").textContent = T.liveCount(cells) + " LEFT";

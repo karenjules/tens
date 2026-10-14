@@ -174,7 +174,7 @@ button:focus-visible { outline: 3px solid var(--tangerine); outline-offset: 2px;
 .board-scroll::-webkit-scrollbar { display: none; }
 .board { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; }
 .cell {
-  height: 44px; border-radius: 12px; border: 1px solid var(--border);
+  aspect-ratio: 1 / 1; height: auto; border-radius: 10px; border: 1px solid var(--border);
   background: var(--linen); color: var(--espresso);
   font-size: 22px; font-weight: 700; padding: 0;
   font-variant-numeric: tabular-nums;
@@ -262,7 +262,7 @@ button:focus-visible { outline: 3px solid var(--tangerine); outline-offset: 2px;
 .rule-h { font-size: 18px; font-weight: 800; letter-spacing: -.3px; }
 .rule-p { font-size: 14px; color: var(--muted); line-height: 1.35; }
 .chips { display: flex; gap: 4px; flex: 0 0 auto; }
-.chip { width: 40px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+.chip { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
 .chip.on { background: var(--flame); }
 .chip.used { color: var(--used); }
 .wrapgrid { display: grid; grid-template-columns: repeat(5, 40px); gap: 4px; }
