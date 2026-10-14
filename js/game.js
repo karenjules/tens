@@ -131,12 +131,32 @@
     return vals;
   }
 
-  // Stage 1 is the classic opening. Later stages get longer and more tangled.
-  function stageBoard(stage, rand) {
-    if (stage <= 1) return CLASSIC.slice();
-    const length = Math.min(28 + (stage - 2) * 2, 54);
-    const nest = Math.min(0.3 + (stage - 2) * 0.06, 0.8);
-    return solvableBoard(length, nest, rand || Math.random);
+  /*
+   * Difficulty levels. hints and undos are per stage; null means unlimited.
+   * len and nest set how long and how tangled each stage's board is.
+   */
+  const LEVELS = {
+    easy: {
+      name: "Easy", tag: "EASY", adds: 5, hints: null, undos: null, mult: 1,
+      len: (s) => Math.min(28 + (s - 2) * 2, 54), nest: (s) => Math.min(0.3 + (s - 2) * 0.06, 0.8),
+    },
+    hard: {
+      name: "Hard", tag: "HARD", adds: 3, hints: 3, undos: 3, mult: 2,
+      len: (s) => Math.min(36 + (s - 1) * 2, 60), nest: (s) => Math.min(0.55 + (s - 1) * 0.05, 0.85),
+    },
+    ultra: {
+      name: "Ultra hard", tag: "ULTRA", adds: 1, hints: 0, undos: 0, mult: 3,
+      len: (s) => Math.min(46 + (s - 1) * 2, 66), nest: (s) => Math.min(0.75 + (s - 1) * 0.03, 0.9),
+    },
+  };
+  const level = (key) => LEVELS[key] || LEVELS.easy;
+
+  // Easy stage 1 is the classic opening. Later stages, and every Hard and Ultra
+  // hard stage, are shuffled boards that get longer and more tangled.
+  function stageBoard(stage, rand, levelKey) {
+    const L = level(levelKey);
+    if (L === LEVELS.easy && stage <= 1) return CLASSIC.slice();
+    return solvableBoard(L.len(stage), L.nest(stage), rand || Math.random);
   }
 
   function dailyBoard(dateKey) {
@@ -153,7 +173,7 @@
   }
 
   global.Tens = {
-    COLS, ADDS, CLASSIC,
+    COLS, ADDS, CLASSIC, LEVELS, level,
     canPair, findPair, play, addNumbers, liveCount,
     stageBoard, dailyBoard, solvableBoard, rng, hash, encode, decode,
   };

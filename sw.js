@@ -4,7 +4,7 @@
  * When you change any file and redeploy, bump VERSION below
  * (e.g. "v1" -> "v2"). That tells phones to download the new files.
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = "tens-" + VERSION;
 
 // Paths are relative to this file, so it works in a subfolder (GitHub Pages).

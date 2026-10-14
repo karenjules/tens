@@ -211,6 +211,12 @@ button:focus-visible { outline: 3px solid var(--tangerine); outline-offset: 2px;
   transition: transform .1s ease, opacity .2s ease;
 }
 .tool:disabled { opacity: .4; cursor: default; }
+.tool-count {
+  min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px; margin-left: 2px;
+  background: var(--brown-2); color: var(--sand); font-family: var(--mono); font-size: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.tool-count:empty { display: none; }
 .add-btn {
   height: 64px; padding: 0 22px 0 18px; border-radius: 32px; border: 0; background: var(--flame); color: var(--espresso);
   display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; position: relative;
@@ -311,6 +317,18 @@ button:focus-visible { outline: 3px solid var(--tangerine); outline-offset: 2px;
 .sheet-body:empty { display: none; }
 .sheet-body b { color: var(--espresso); }
 .sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+.level-btn {
+  width: 100%; height: auto; min-height: 72px; border-radius: 22px; border: 1px solid var(--border); background: var(--linen);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; text-align: left;
+  transition: transform .1s ease;
+}
+.level-btn:active { transform: scale(.98); background: var(--flame); border-color: var(--flame); }
+.level-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.level-name { font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
+.level-sub { font-family: var(--mono); font-size: 11px; letter-spacing: .4px; color: var(--muted); }
+.pips { display: flex; gap: 4px; flex: 0 0 auto; }
+.pips i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--espresso); }
+.pips i.on { background: var(--flame); border-color: var(--flame); }
 
 /* Short phones (iPhone SE, mini): tighten the home screen so it fits without scrolling */
 @media (max-height: 740px) {

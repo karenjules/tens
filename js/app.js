@@ -14,7 +14,8 @@
   // run:   the main game, stage after stage
   // daily: today's daily challenge
   // Games are stored with their cells packed into a short string (see game.js).
-  const defaults = { run: null, daily: null, best: 0, streak: 0, lastDaily: null, result: null };
+  // best is the Easy best; Hard and Ultra hard keep their own.
+  const defaults = { run: null, daily: null, best: 0, bestHard: 0, bestUltra: 0, streak: 0, lastDaily: null, result: null };
   let store = defaults;
   try { store = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) { /* start fresh */ }
 
@@ -42,6 +43,18 @@
   }
   const days = (n) => n + (n === 1 ? " day" : " days");
 
+  // ---------- Levels ----------
+  const bestKey = (lvl) => (lvl === "hard" ? "bestHard" : lvl === "ultra" ? "bestUltra" : "best");
+  const bestFor = (lvl) => store[bestKey(lvl)] || 0;
+  // Saves bigger scores as the level's best. Returns true if it's a new best.
+  function recordBest(lvl, score) {
+    if (score <= bestFor(lvl)) return false;
+    store[bestKey(lvl)] = score;
+    return true;
+  }
+  // " · HARD" after stage labels; nothing for Easy, which is how the game always looked.
+  const levelSuffix = (lvl) => (lvl && lvl !== "easy" ? " · " + T.level(lvl).tag : "");
+
   // ---------- Game state ----------
   let g = null;        // the game being played, cells unpacked
   let slot = "run";    // which saved game g belongs to
@@ -51,12 +64,13 @@
   let busy = false;    // true while a row-clear animation runs
   let clockFrom = null;
 
-  function makeGame(mode, stage, values, score, date) {
+  function makeGame(mode, stage, values, score, date, lvl) {
+    const L = T.level(lvl);
     return {
-      mode, stage, date: date || null,
+      mode, stage, date: date || null, level: lvl || "easy",
       cells: values.map((v) => ({ v, g: false })),
       initial: values.join(""),
-      adds: T.ADDS, score, stageStart: score,
+      adds: L.adds, hints: L.hints, undos: L.undos, score, stageStart: score,
       pairs: 0, addsUsed: 0, total: values.length, elapsed: 0,
       history: [], over: false, done: false,
     };
@@ -100,7 +114,7 @@
     const run = store.run;
     const cells = run ? T.decode(run.cells) : T.CLASSIC.map((v) => ({ v, g: false }));
     const stage = run ? run.stage : 1;
-    $("continue-label").textContent = (!run ? "NEW GAME" : run.over ? "GAME OVER" : "CONTINUE") + " · STAGE " + stage;
+    $("continue-label").textContent = (!run ? "NEW GAME" : run.over ? "GAME OVER" : "CONTINUE") + " · STAGE " + stage + levelSuffix(run && run.level);
     $("continue-left").textContent = T.liveCount(cells) + " LEFT";
     $("continue-score").textContent = fmt(run ? run.score : 0);
 
@@ -113,7 +127,9 @@
     }
     $("continue-mini").innerHTML = mini;
 
-    $("home-best").textContent = fmt(store.best);
+    const lvl = (run && run.level) || "easy";
+    $("home-best-label").textContent = lvl === "easy" ? "BEST SCORE" : "BEST · " + T.level(lvl).tag;
+    $("home-best").textContent = fmt(bestFor(lvl));
     $("home-streak").textContent = days(currentStreak());
     const doneToday = store.daily && store.daily.date === today() && store.daily.done;
     $("home-daily").textContent = doneToday ? "Daily done ✓" : "Daily challenge";
@@ -129,33 +145,41 @@
     if (g.over) gameOverSheet();
   }
 
-  function newRun() {
-    store.run = pack(makeGame("run", 1, T.stageBoard(1), 0));
+  function newRun(lvl) {
+    store.run = pack(makeGame("run", 1, T.stageBoard(1, null, lvl), 0, null, lvl));
     store.result = null;
     save();
     openGame("run");
   }
 
   function continueRun() {
-    if (store.run) openGame("run"); else newRun();
+    if (store.run) openGame("run"); else pickLevel();
   }
 
   $("home-continue").addEventListener("click", continueRun);
 
-  $("home-new").addEventListener("click", () => {
+  $("home-new").addEventListener("click", pickLevel);
+
+  // New game: choose a level. Warns when it would end a game in progress.
+  function pickLevel() {
     const run = store.run;
-    if (run && !run.over && (run.stage > 1 || run.score > 0)) {
-      sheet({
-        title: "Start over?",
-        body: "This ends your current game on stage " + run.stage + " with <b>" + fmt(run.score) + "</b> points.",
-        actions: [
-          { label: "Start new game", cls: "btn-flame", fn: newRun },
-          { label: "Keep playing", cls: "btn-outline btn-sm", fn: () => openGame("run") },
-        ],
-        dismissable: true,
-      });
-    } else newRun();
-  });
+    const inProgress = run && !run.over && (run.stage > 1 || run.score > 0);
+    const blurbs = {
+      easy: "5 adds · unlimited hints and undo",
+      hard: "3 adds, hints and undos · ×2 points",
+      ultra: "1 add · no hints or undo · ×3 points",
+    };
+    const actions = Object.keys(T.LEVELS).map((key, i) => ({
+      label: T.LEVELS[key].name, sub: blurbs[key], pips: i + 1, cls: "level-btn", fn: () => newRun(key),
+    }));
+    actions.push({ label: "Cancel", cls: "btn-text", fn: null });
+    sheet({
+      title: "Choose a level",
+      body: inProgress ? "Starting a new game ends your current one on stage " + run.stage + " with <b>" + fmt(run.score) + "</b> points." : "",
+      actions,
+      dismissable: true,
+    });
+  }
 
   $("home-daily").addEventListener("click", () => {
     const key = today();
@@ -181,7 +205,7 @@
 
   function restartStage() {
     const r = store.run;
-    const fresh = makeGame("run", r.stage, r.initial.split("").map(Number), r.stageStart);
+    const fresh = makeGame("run", r.stage, r.initial.split("").map(Number), r.stageStart, null, r.level);
     store.run = pack(fresh);
     save();
     renderHome();
@@ -205,7 +229,7 @@
   const scrollEl = $("board-scroll");
 
   function renderGame(effects) {
-    $("game-stage").textContent = g.mode === "daily" ? "DAILY · " + shortDate(g.date) : "STAGE " + g.stage;
+    $("game-stage").textContent = g.mode === "daily" ? "DAILY · " + shortDate(g.date) : "STAGE " + g.stage + levelSuffix(g.level);
     $("game-score").textContent = fmt(g.score);
     const left = T.liveCount(g.cells);
     $("game-left").textContent = left;
@@ -213,7 +237,10 @@
     $("game-adds").textContent = g.adds;
     $("game-add").classList.toggle("empty", g.adds <= 0);
     $("game-add").setAttribute("aria-label", "Add numbers, " + g.adds + " left");
-    $("game-undo").disabled = g.history.length === 0;
+    $("game-undo").disabled = g.history.length === 0 || g.undos === 0;
+    $("game-hint").disabled = g.hints === 0;
+    $("undo-count").textContent = g.undos == null ? "" : g.undos;
+    $("hint-count").textContent = g.hints == null ? "" : g.hints;
     renderBoard(g.cells, effects || {});
   }
 
@@ -259,7 +286,7 @@
     const res = T.play(g.cells, a, b);
     g.cells = res.cells;
     g.pairs += 1;
-    g.score += res.points;
+    g.score += res.points * T.level(g.level).mult;
     persist();
     buzz();
     bumpScore();
@@ -270,7 +297,8 @@
       busy = true;
       renderGame();
       renderBoard(res.crossed, fx);
-      toast(res.rows.length > 1 ? res.rows.length + " rows cleared +" + res.rows.length * 10 : "Row cleared +10");
+      const rowPts = 10 * T.level(g.level).mult;
+      toast(res.rows.length > 1 ? res.rows.length + " rows cleared +" + res.rows.length * rowPts : "Row cleared +" + rowPts);
       setTimeout(() => { busy = false; renderBoard(g.cells, {}); afterMove(); }, 520);
     } else {
       renderGame({ [a]: "pop", [b]: "pop" });
@@ -299,8 +327,10 @@
 
   $("game-undo").addEventListener("click", () => {
     if (busy || !g || g.done) return;
+    if (g.undos === 0) { toast(g.level === "ultra" ? "No undo on Ultra hard" : "No undos left this stage"); return; }
     const prev = g.history.pop();
     if (!prev) { toast("Nothing to undo"); return; }
+    if (g.undos != null) g.undos -= 1;
     g.cells = T.decode(prev.c);
     g.adds = prev.adds; g.score = prev.score; g.pairs = prev.pairs; g.addsUsed = prev.addsUsed; g.total = prev.total;
     g.over = false;
@@ -313,6 +343,7 @@
 
   $("game-hint").addEventListener("click", () => {
     if (busy || !g || g.over || g.done) return;
+    if (g.hints === 0) { toast(g.level === "ultra" ? "No hints on Ultra hard" : "No hints left this stage"); return; }
     const p = T.findPair(g.cells, hintFrom);
     if (!p) {
       if (g.adds > 0) toast("No pairs left. Tap Add.");
@@ -320,7 +351,7 @@
       return;
     }
     hint = p; hintFrom = p[0] + 1; sel = null;
-    renderBoard(g.cells, {});
+    if (g.hints != null) { g.hints -= 1; persist(); renderGame(); } else renderBoard(g.cells, {});
     const el = boardEl.children[p[0]];
     if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
   });
@@ -352,13 +383,14 @@
     g.done = true;
     const result = {
       mode: g.mode, stage: g.stage, date: g.date, score: g.score, pairs: g.pairs,
-      addsUsed: g.addsUsed, time: g.elapsed, newBest: false, best: store.best, streak: 0,
+      addsUsed: g.addsUsed, addsMax: T.level(g.level).adds, level: g.level || "easy",
+      time: g.elapsed, newBest: false, best: 0, streak: 0,
     };
     if (g.mode === "run") {
-      if (g.score > store.best) { store.best = g.score; result.newBest = true; }
-      result.best = store.best;
+      result.newBest = recordBest(result.level, g.score);
+      result.best = bestFor(result.level);
       // Move the saved run on to the next stage straight away, so closing the app here is safe.
-      store.run = pack(makeGame("run", g.stage + 1, T.stageBoard(g.stage + 1), g.score));
+      store.run = pack(makeGame("run", g.stage + 1, T.stageBoard(g.stage + 1, null, result.level), g.score, null, result.level));
       g = null; // the finished board must not be saved back over the next stage
     } else {
       store.daily = pack(g);
@@ -382,7 +414,7 @@
     stopClock();
     g.over = true;
     let newBest = false;
-    if (g.mode === "run" && g.score > store.best) { store.best = g.score; newBest = true; }
+    if (g.mode === "run") newBest = recordBest(g.level || "easy", g.score);
     persist();
     gameOverSheet(newBest);
   }
@@ -397,9 +429,9 @@
         openGame("daily");
       } });
     } else {
-      actions.push({ label: "New game", cls: "btn-flame", fn: newRun });
+      actions.push({ label: "New game", cls: "btn-flame", fn: pickLevel });
     }
-    if (g.history.length) actions.push({ label: "Undo last move", cls: "btn-outline btn-sm", fn: () => $("game-undo").click() });
+    if (g.history.length && g.undos !== 0) actions.push({ label: "Undo last move", cls: "btn-outline btn-sm", fn: () => $("game-undo").click() });
     actions.push({ label: "Home", cls: "btn-text", fn: () => show("home") });
     sheet({
       title: "No moves left",
@@ -432,14 +464,14 @@
     const r = store.result;
     if (!r) { show("home"); return; }
     const daily = r.mode === "daily";
-    $("win-label").textContent = daily ? "DAILY · " + shortDate(r.date) + " COMPLETE" : "STAGE " + r.stage + " COMPLETE";
+    $("win-label").textContent = daily ? "DAILY · " + shortDate(r.date) + " COMPLETE" : "STAGE " + r.stage + levelSuffix(r.level) + " COMPLETE";
     $("win-score").textContent = fmt(r.score);
     $("win-best").innerHTML = daily ? "STREAK<br>" + days(r.streak).toUpperCase() : "BEST<br>" + fmt(r.best);
     const sticker = $("win-best-sticker");
     sticker.hidden = daily ? r.streak < 2 : !r.newBest;
     sticker.textContent = daily ? r.streak + " day streak" : "New best";
     $("win-pairs").textContent = r.pairs;
-    $("win-adds").textContent = r.addsUsed + " of " + T.ADDS;
+    $("win-adds").textContent = r.addsUsed + " of " + (r.addsMax || T.ADDS);
     $("win-time").textContent = formatTime(r.time);
     $("win-next").firstChild.textContent = daily ? "Play stages " : "Next stage ";
     show("win");
@@ -468,7 +500,13 @@
       const b = document.createElement("button");
       b.type = "button";
       b.className = "btn " + a.cls;
-      b.textContent = a.label;
+      if (a.sub) {
+        let pips = "";
+        for (let k = 0; k < 3; k++) pips += '<i class="' + (k < a.pips ? "on" : "") + '"></i>';
+        b.innerHTML = '<span class="level-text"><span class="level-name"></span><span class="level-sub"></span></span><span class="pips" aria-hidden="true">' + pips + "</span>";
+        b.querySelector(".level-name").textContent = a.label;
+        b.querySelector(".level-sub").textContent = a.sub;
+      } else b.textContent = a.label;
       b.addEventListener("click", () => { hideSheet(); if (a.fn) a.fn(); });
       wrap.appendChild(b);
     }
