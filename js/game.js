@@ -25,11 +25,29 @@
     return -1;
   }
 
+  // Next number still in play diagonally below i: dir +1 goes down-right, -1 down-left.
+  // Diagonals stop at the edge of the board rather than wrapping round.
+  function nextDiag(cells, i, dir) {
+    let col = i % COLS;
+    for (let k = i + COLS + dir; k < cells.length; k += COLS + dir) {
+      col += dir;
+      if (col < 0 || col >= COLS) return -1;
+      if (!cells[k].g) return k;
+    }
+    return -1;
+  }
+
+  // The numbers that count as neighbours of i, looking forwards: across, down and both diagonals.
+  // Crossed-out numbers in between are skipped, so they never block a pair.
+  function neighbours(cells, i) {
+    return [nextAcross(cells, i), nextDown(cells, i), nextDiag(cells, i, 1), nextDiag(cells, i, -1)].filter((k) => k >= 0);
+  }
+
   function canPair(cells, a, b) {
     if (a === b || a < 0 || b < 0) return false;
     const i = Math.min(a, b), j = Math.max(a, b);
     if (cells[i].g || cells[j].g || !matches(cells[i].v, cells[j].v)) return false;
-    return nextAcross(cells, i) === j || ((j - i) % COLS === 0 && nextDown(cells, i) === j);
+    return neighbours(cells, i).includes(j);
   }
 
   // Finds a valid pair, scanning from `from` and wrapping, so repeated hints cycle.
@@ -39,10 +57,7 @@
     for (let s = 0; s < n; s++) {
       const a = (start + s) % n;
       if (cells[a].g) continue;
-      const b1 = nextAcross(cells, a);
-      if (b1 >= 0 && matches(cells[a].v, cells[b1].v)) return [a, b1];
-      const b2 = nextDown(cells, a);
-      if (b2 >= 0 && matches(cells[a].v, cells[b2].v)) return [a, b2];
+      for (const b of neighbours(cells, a)) if (matches(cells[a].v, cells[b].v)) return [a, b];
     }
     return null;
   }

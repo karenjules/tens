@@ -512,5 +512,14 @@
   const local = ["localhost", "127.0.0.1", ""].includes(location.hostname);
   if ("serviceWorker" in navigator && !local) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    // When a new version takes over, reload once so it shows straight away (not on the very first install).
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      if (current === "game") persist();
+      location.reload();
+    });
   }
 })();
